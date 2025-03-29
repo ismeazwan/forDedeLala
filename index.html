@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Love Fireworks for Lala</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: black;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="fireworkCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("fireworkCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        class Firework {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.particles = [];
+                this.exploded = false;
+                this.vy = -5;
+                this.explosionY = Math.random() * (canvas.height / 2) + (canvas.height / 4);
+                this.createParticles();
+            }
+            createParticles() {
+                let scale = 6;
+                for (let t = 0; t < Math.PI * 2; t += 0.2) {
+                    let px = scale * (16 * Math.pow(Math.sin(t), 3));
+                    let py = -scale * (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+                    this.particles.push({
+                        x: px, y: py,
+                        dx: (Math.random() - 0.5) * 1.5,
+                        dy: (Math.random() - 0.5) * 1.5,
+                        alpha: 1
+                    });
+                }
+            }
+            draw() {
+                if (!this.exploded) {
+                    ctx.fillStyle = `rgba(${this.color[0]}, ${this.color[1]}, ${this.color[2]}, 1)`;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    this.particles.forEach(p => {
+                        ctx.fillStyle = `rgba(${this.color[0]}, ${this.color[1]}, ${this.color[2]}, ${p.alpha})`;
+                        ctx.beginPath();
+                        ctx.arc(this.x + p.x, this.y + p.y, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                }
+            }
+            update() {
+                if (!this.exploded) {
+                    this.y += this.vy;
+                    if (this.y < this.explosionY) {
+                        this.exploded = true;
+                    }
+                } else {
+                    this.particles.forEach(p => {
+                        p.x += p.dx;
+                        p.y += p.dy;
+                        p.alpha -= 0.03;
+                    });
+                    this.particles = this.particles.filter(p => p.alpha > 0);
+                }
+            }
+        }
+
+        let fireworks = [];
+        function animate() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            fireworks.forEach(firework => {
+                firework.draw();
+                firework.update();
+            });
+            fireworks = fireworks.filter(firework => firework.particles.length > 0);
+            requestAnimationFrame(animate);
+        }
+        
+        function createFireworks() {
+            for (let i = 0; i < 10; i++) {
+                let x = canvas.width / 2 + (Math.random() - 0.5) * 400;
+                let y = canvas.height;
+                let color = [255, Math.random() * 100, Math.random() * 255];
+                fireworks.push(new Firework(x, y, color));
+            }
+        }
+        
+        setInterval(createFireworks, 2500);
+        animate();
+    </script>
+</body>
+</html>
